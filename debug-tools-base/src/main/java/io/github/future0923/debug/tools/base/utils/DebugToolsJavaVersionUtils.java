@@ -24,6 +24,11 @@ import java.util.Properties;
  *
  */
 public class DebugToolsJavaVersionUtils {
+
+    /**
+     * 这里获取的是运行当前 JVM进程 的 Java版本
+     * 当通过 java -jar 启动应用时，System.getProperty("java.specification.version") 返回的就是执行 java 命令的JVM版本
+     */
     private static final String VERSION_PROP_NAME = "java.specification.version";
     private static final String JAVA_VERSION_STR = System.getProperty(VERSION_PROP_NAME);
     private static final float JAVA_VERSION = Float.parseFloat(JAVA_VERSION_STR);

@@ -43,6 +43,9 @@ public class AgentConfig {
 
     private static final String VERSION = "debug.tools.version";
 
+    /**
+     * Spring 扩展路径
+     */
     private static final String SPRING_EXTENSION_PATH = "debug.tools.extension.spring.path";
 
     private static final String SOLON_EXTENSION_PATH = "debug.tools.extension.solon.path";
@@ -63,10 +66,12 @@ public class AgentConfig {
 
     private AgentConfig() {
         String homeDir = System.getProperty("user.home");
+        // debug-tools-cache.properties 文件
         propertiesFile = new File(homeDir + File.separator + ProjectConstants.NAME + File.separator + FILE_NAME);
         if (!propertiesFile.exists()) {
             DebugToolsFileUtils.touch(propertiesFile);
         }
+
         try {
             properties.load(propertiesFile.toURI().toURL().openStream());
             processUpgrade();
@@ -77,6 +82,9 @@ public class AgentConfig {
 
     }
 
+    /**
+     * 如果当前版本号和配置文件中的版本号不一致，则说明当前正在进行项目的开发工作
+     */
     private void processUpgrade() {
         String version = getVersion();
         isUpgrade = !ProjectConstants.VERSION.equals(version);

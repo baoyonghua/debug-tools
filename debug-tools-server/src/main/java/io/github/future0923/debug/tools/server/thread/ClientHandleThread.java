@@ -23,6 +23,7 @@ import io.github.future0923.debug.tools.common.protocal.packet.Packet;
 import io.github.future0923.debug.tools.common.protocal.packet.PacketCodec;
 import io.github.future0923.debug.tools.common.protocal.packet.response.HeartBeatResponsePacket;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,18 +49,23 @@ public class ClientHandleThread extends Thread {
 
     private final PacketHandleService packetHandleService;
 
+    @Setter
     private volatile boolean isClosed = false;
 
-    public void setClosed(boolean closed) {
-        isClosed = closed;
-    }
-
+    /**
+     * 创建一个用于客户端处理线程
+     *
+     * @param socket Socket 连接
+     * @param lastUpdateTime2Thread 存储每个客户端最后一次访问时间的 Map，当客户端访问时需要更新此客户端的最后一次访问时间
+     * @param packetHandleService 用于处理客户端请求的 Service
+     */
     public ClientHandleThread(Socket socket, Map<ClientHandleThread, Long> lastUpdateTime2Thread, PacketHandleService packetHandleService) {
         setDaemon(true);
         setName("DebugTools-ClientHandle-Thread-" + socket.getPort());
         this.socket = socket;
         this.lastUpdateTime2Thread = lastUpdateTime2Thread;
         this.packetHandleService = packetHandleService;
+
         try {
             this.inputStream = socket.getInputStream();
             this.outputStream = socket.getOutputStream();
@@ -71,11 +77,16 @@ public class ClientHandleThread extends Thread {
     @Override
     public void run() {
         try {
-            while(!isClosed) {
+            while (!isClosed) {
                 try {
+                    // 获取数据包
                     Packet packet = PacketCodec.INSTANCE.getPacket(inputStream);
                     if (packet != null) {
+                        /*
+                        更新该客户端最新的访问时间, 当访问时间超过 3 分钟会关闭对应连接，详见 SessionCheckThread
+                         */
                         refresh();
+
                         if (!socket.isClosed()) {
                             packetHandleService.handle(outputStream, packet);
                         } else {

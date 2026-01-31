@@ -55,13 +55,29 @@ public class DebugToolsHttpServer {
             logger.error("start http server bind port in {} error", e, port);
             return;
         }
+
+        // IndexHttpHandler -> hello debug tools
         httpServer.createContext(IndexHttpHandler.PATH, IndexHttpHandler.INSTANCE);
+
+        // RunResultTypeHttpHandler -> 用于返回当前运行方法的返回值类型
         httpServer.createContext(RunResultTypeHttpHandler.PATH, RunResultTypeHttpHandler.INSTANCE);
+
+        // RunResultDetailHttpHandler -> 用于返回当前运行方法的返回值
         httpServer.createContext(RunResultDetailHttpHandler.PATH, RunResultDetailHttpHandler.INSTANCE);
+
+        // AllClassLoaderHttpHandler -> 用于返回当前系统中所有的类加载器信息
         httpServer.createContext(AllClassLoaderHttpHandler.PATH, AllClassLoaderHttpHandler.INSTANCE);
+
+        // GetApplicationNameHttpHandler -> 用于返回当前应用程序的名称
         httpServer.createContext(GetApplicationNameHttpHandler.PATH, GetApplicationNameHttpHandler.INSTANCE);
+
+        // RunResultTraceHttpHandler -> 用于返回当前运行方法的调用栈信息
         httpServer.createContext(RunResultTraceHttpHandler.PATH, RunResultTraceHttpHandler.INSTANCE);
+
+        // GetPrintSqlTypeHttpHandler -> 用于返回当前打印SQL的类型
         httpServer.createContext(GetPrintSqlTypeHttpHandler.PATH, GetPrintSqlTypeHttpHandler.INSTANCE);
+
+        // ChangePrintSqlTypeHttpHandler -> 用于修改打印SQL的类型
         httpServer.createContext(ChangePrintSqlTypeHttpHandler.PATH, ChangePrintSqlTypeHttpHandler.INSTANCE);
     }
 

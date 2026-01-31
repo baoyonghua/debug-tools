@@ -83,7 +83,7 @@ public class AgentArgs {
     private String disabledPlugins;
 
     /**
-     * 外部配置文件路径
+     * 外部配置文件路径，在外部配置文件中可以配置任何的参数, 但优先级要低于直接指定的参数
      */
     private String propertiesFilePath;
 
@@ -142,6 +142,7 @@ public class AgentArgs {
                 }
             }
         }
+        // 加载外部配置文件内容
         config.loadConfigurationFile();
         return config;
     }
@@ -197,6 +198,7 @@ public class AgentArgs {
                 URL configurationURL = DebugToolsStringUtils.resourceNameToURL(externalPropertiesFile);
                 Properties properties = new DebugToolsProperties();
                 properties.load(configurationURL.openStream());
+
                 if (DebugToolsStringUtils.isBlank(hotswap)) {
                     hotswap = properties.getProperty("hotswap", "true");
                 }

@@ -17,15 +17,7 @@
 package io.github.future0923.debug.tools.server.scoket.handler;
 
 import io.github.future0923.debug.tools.common.handler.PacketHandleService;
-import io.github.future0923.debug.tools.common.protocal.packet.request.ChangeTraceMethodRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.ClearRunResultRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.HeartBeatRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.LocalCompilerHotDeployRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.RemoteCompilerHotDeployRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.ResourceHotDeployRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.RunGroovyScriptRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.RunTargetMethodRequestPacket;
-import io.github.future0923.debug.tools.common.protocal.packet.request.ServerCloseRequestPacket;
+import io.github.future0923.debug.tools.common.protocal.packet.request.*;
 
 /**
  * 定义数据由哪个 PacketHandler 处理
@@ -35,14 +27,31 @@ import io.github.future0923.debug.tools.common.protocal.packet.request.ServerClo
 public class ServerPacketHandleService extends PacketHandleService {
 
     public ServerPacketHandleService() {
+        // HeartBeatRequestHandler -> 处理客户端发来的心跳包
         register(HeartBeatRequestPacket.class, HeartBeatRequestHandler.INSTANCE);
+
+        // ServerCloseRequestHandler -> 处理客户端发来的关闭请求
         register(ServerCloseRequestPacket.class, ServerCloseRequestHandler.INSTANCE);
+
+        // RunTargetMethodRequestHandler -> 处理客户端发来的运行目标方法请求(run everywhere)
         register(RunTargetMethodRequestPacket.class, RunTargetMethodRequestHandler.INSTANCE);
+
+        // ClearRunResultRequestHandler -> 处理客户端发来的清除运行结果请求
         register(ClearRunResultRequestPacket.class, ClearRunResultRequestHandler.INSTANCE);
+
+        // RunGroovyScriptRequestHandler -> 处理客户端发来的运行Groovy脚本请求
         register(RunGroovyScriptRequestPacket.class, RunGroovyScriptRequestHandler.INSTANCE);
+
+        // LocalCompilerHotDeployRequestHandler -> 处理客户端发来的HotDeploy请求(class文件已在本地编译完成)
         register(LocalCompilerHotDeployRequestPacket.class, LocalCompilerHotDeployRequestHandler.INSTANCE);
+
+        // RemoteCompilerHotDeployRequestHandler -> 处理客户端发来的HotDeploy请求(class文件需要远程编译)
         register(RemoteCompilerHotDeployRequestPacket.class, RemoteCompilerHotDeployRequestHandler.INSTANCE);
+
+        // ResourceHotDeployRequestHandler -> 处理客户端发来的HotDeploy请求(资源文件)
         register(ResourceHotDeployRequestPacket.class, ResourceHotDeployRequestHandler.INSTANCE);
+
+        // ChangeTraceMethodRequestHandler -> 处理客户端发来的跟踪方法请求(对方法调用进行追踪)
         register(ChangeTraceMethodRequestPacket.class, ChangeTraceMethodRequestHandler.INSTANCE);
     }
 }

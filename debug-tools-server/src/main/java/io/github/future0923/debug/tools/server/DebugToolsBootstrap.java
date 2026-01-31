@@ -32,6 +32,8 @@ import lombok.Getter;
 import java.lang.instrument.Instrumentation;
 
 /**
+ * DebugTools 服务端启动类
+ *
  * @author future0923
  */
 public class DebugToolsBootstrap {
@@ -57,6 +59,8 @@ public class DebugToolsBootstrap {
 
     private DebugToolsBootstrap(Instrumentation instrumentation) {
         this.instrumentation = instrumentation;
+
+        // 初始化 JVM工具(jni), 在Agent模式下启动时，这个已经完成了初始化, 而在 attach 模式下, 还没有进行初始化, 因此在这里统一进行下初始化操作
         JvmToolsUtils.init();
     }
 
@@ -67,14 +71,24 @@ public class DebugToolsBootstrap {
         return INSTANCE;
     }
 
+    /**
+     * 启动 debug-tools server
+     *
+     * @param agentArgs
+     */
     public void start(AgentArgs agentArgs) {
-        int tcpPort = StrUtil.isBlank(agentArgs.getTcpPort()) ? DebugToolsIOUtils.getAvailablePort(12345) : Integer.parseInt(agentArgs.getTcpPort());
-        int httpPort = StrUtil.isBlank(agentArgs.getHttpPort()) ? DebugToolsIOUtils.getAvailablePort(22222) : Integer.parseInt(agentArgs.getHttpPort());
+        int tcpPort = StrUtil.isBlank(agentArgs.getTcpPort()) ?
+                DebugToolsIOUtils.getAvailablePort(12345) : Integer.parseInt(agentArgs.getTcpPort());
+        int httpPort = StrUtil.isBlank(agentArgs.getHttpPort()) ?
+                DebugToolsIOUtils.getAvailablePort(22222) : Integer.parseInt(agentArgs.getHttpPort());
+
         serverConfig.setApplicationName(getApplicationName(agentArgs));
         serverConfig.setTcpPort(tcpPort);
         serverConfig.setHttpPort(httpPort);
+
         startTcpServer(tcpPort);
         startHttpServer(httpPort);
+
         started = true;
     }
 
@@ -92,6 +106,11 @@ public class DebugToolsBootstrap {
         return DebugToolsJvmUtils.getApplicationName();
     }
 
+    /**
+     * 启动 tcp 服务器
+     *
+     * @param tcpPort
+     */
     private void startTcpServer(int tcpPort) {
         if (!started || socketServer == null) {
             socketServer = new DebugToolsSocketServer();
@@ -105,6 +124,11 @@ public class DebugToolsBootstrap {
         this.tcpPort = tcpPort;
     }
 
+    /**
+     * 启动 http 服务器
+     *
+     * @param httpPort
+     */
     private void startHttpServer(int httpPort) {
         if (!started || httpServer == null) {
             httpServer = new DebugToolsHttpServer(httpPort);
@@ -118,12 +142,15 @@ public class DebugToolsBootstrap {
         this.httpPort = httpPort;
     }
 
+    /**
+     * 停止 server
+     */
     public void stop() {
         if (socketServer != null) {
             socketServer.close();
             socketServer = null;
         }
-        if(httpServer != null) {
+        if (httpServer != null) {
             httpServer.close();
             httpServer = null;
         }

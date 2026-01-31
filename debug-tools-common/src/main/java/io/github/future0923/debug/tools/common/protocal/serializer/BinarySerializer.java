@@ -38,6 +38,7 @@ public class BinarySerializer implements Serializer {
 
     @Override
     public void deserialize(Packet packet, byte[] bytes) {
+        // 委托给 Packet 来完成实际的反序列化操作
         packet.binaryDeserialization(bytes);
     }
 }

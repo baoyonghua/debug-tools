@@ -20,20 +20,15 @@ import io.github.future0923.debug.tools.base.hutool.core.collection.CollUtil;
 import io.github.future0923.debug.tools.base.hutool.core.util.ArrayUtil;
 import io.github.future0923.debug.tools.base.hutool.core.util.ClassUtil;
 import io.github.future0923.debug.tools.base.logging.Logger;
+import io.github.future0923.debug.tools.base.utils.DebugToolsClassUtils;
 import io.github.future0923.debug.tools.base.utils.DebugToolsStringUtils;
 import io.github.future0923.debug.tools.common.dto.RunResultDTO;
 import io.github.future0923.debug.tools.common.enums.ResultVarClassType;
-import io.github.future0923.debug.tools.base.utils.DebugToolsClassUtils;
 import io.github.future0923.debug.tools.common.utils.JdkUnsafeUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -41,6 +36,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DebugToolsResultUtils {
 
+    /**
+     * 用于缓存运行结果的Map
+     * <li>key: 此次运行结果的唯一标识</li>
+     * <li>value: 此次运行结果, 如果此次运行成功, 那么是一个实际的运行结果对象, 如果此次运行出现了异常, 那么可能就是它的异常对象</li>
+     */
     private static final Map<String, Object> CACHE = new ConcurrentHashMap<>();
 
     private static final Logger log = Logger.getLogger(DebugToolsResultUtils.class);

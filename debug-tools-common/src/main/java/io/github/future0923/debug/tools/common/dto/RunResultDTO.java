@@ -162,6 +162,12 @@ public class RunResultDTO implements Serializable {
         return String.valueOf(System.identityHashCode(valueObj));
     }
 
+    /**
+     * 生成随机的offsetPath, 该 offsetPath 是此次 运行结果valueObj 的唯一标识
+     *
+     * @param valueObj 运行结果value, 它可能是实际的运行结果, 也可能是一个异常对象
+     * @return
+     */
     public static String genOffsetPathRandom(Object valueObj) {
         // 同一个对象生成的identityHashCode相同，增加随机数区分。异步销毁的缓存的时候和异步生成缓存是不会把之前的缓存销毁掉。
         return System.identityHashCode(valueObj) + "" + new Random().nextInt(999999);

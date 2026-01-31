@@ -19,19 +19,10 @@ package io.github.future0923.debug.tools.base.utils;
 import io.github.future0923.debug.tools.base.constants.ProjectConstants;
 import io.github.future0923.debug.tools.base.hutool.core.io.FileUtil;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Enumeration;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -45,6 +36,13 @@ public class DebugToolsFileUtils {
 
     private static final String CURRENT_PATH = ".";
 
+    /**
+     * 从 debugTools 下的 lib 目录中获取指定的jar文件
+     *
+     * @param classLoader
+     * @param name
+     * @return
+     */
     public static File getLibResourceJar(ClassLoader classLoader, String name) {
         String fullName = "lib/" + name + ".jar";
         File debugToolsCoreJarFile;

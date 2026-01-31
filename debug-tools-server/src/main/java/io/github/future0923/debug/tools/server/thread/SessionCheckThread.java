@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 用于检测 session 是否超时的线程
+ *
  * @author future0923
  */
 public class SessionCheckThread extends Thread {
@@ -51,6 +53,7 @@ public class SessionCheckThread extends Thread {
             } catch (InterruptedException e) {
                 return;
             }
+
             try {
                 long nowTime = System.currentTimeMillis();
                 Iterator<Map.Entry<ClientHandleThread, Long>> iterator = lastUpdateTime2Thread.entrySet().iterator();

@@ -19,6 +19,8 @@ package io.github.future0923.debug.tools.common.protocal.packet.response;
 import io.github.future0923.debug.tools.base.logging.Logger;
 import io.github.future0923.debug.tools.common.protocal.Command;
 import io.github.future0923.debug.tools.common.protocal.packet.Packet;
+import io.github.future0923.debug.tools.common.protocal.packet.request.LocalCompilerHotDeployRequestPacket;
+import io.github.future0923.debug.tools.common.protocal.packet.request.RemoteCompilerHotDeployRequestPacket;
 import io.github.future0923.debug.tools.common.utils.DebugToolsJsonUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,6 +28,8 @@ import lombok.EqualsAndHashCode;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * 收到热部署请求{@link LocalCompilerHotDeployRequestPacket}/{@link RemoteCompilerHotDeployRequestPacket}时返回给客户端的 数据包
+ *
  * @author future0923
  */
 @Data

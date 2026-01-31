@@ -25,9 +25,26 @@ public interface Serializer {
 
     BinarySerializer DEFAULT = new BinarySerializer();
 
+    /**
+     * 获取序列化算法
+     *
+     * @return
+     */
     byte getSerializerAlgorithm();
 
+    /**
+     * 序列化, 用于将一个 Packet 对象序列化为字节数组, 以便于在网络上进行传输
+     *
+     * @param packet
+     * @return
+     */
     byte[] serialize(Packet packet);
 
+    /**
+     * 反序列化, 用于将字节数组反序列化, 并将反序列化的结果塞入到Packet中
+     *
+     * @param packet
+     * @param bytes
+     */
     void deserialize(Packet packet, byte[] bytes);
 }

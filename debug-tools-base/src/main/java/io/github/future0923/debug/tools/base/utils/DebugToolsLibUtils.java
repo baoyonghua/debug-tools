@@ -23,10 +23,19 @@ import java.io.File;
 /**
  * @author future0923
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class DebugToolsLibUtils {
 
-
+    /**
+     * DebugTools目录, 如果未在系统环境变量中设置 home dir，
+     * 则默认在 user.home 指定的目录下创建 .debugTools 目录来作为 DebugTools 的主目录
+     */
     private static File DEBUG_TOOLS_HOME_DIR;
+
+    /**
+     * DebugTools Lib目录, 如果未在系统环境变量中设置 home dir，
+     * 则默认在 user.home 指定的目录 .debugTools/lib 目录来作为 DebugTools 的 lib 目录
+     */
     private static final File DEBUG_TOOLS_LIB_DIR;
 
     static {
@@ -37,13 +46,15 @@ public class DebugToolsLibUtils {
         } else {
             DEBUG_TOOLS_HOME_DIR = new File(System.getProperty("user.home") + File.separator + ".debugTools");
         }
+
         try {
             DEBUG_TOOLS_HOME_DIR.mkdirs();
         } catch (Throwable t) {
             //ignore
         }
+
         if (!DEBUG_TOOLS_HOME_DIR.exists()) {
-            // try to set a temp directory
+            // 如果在用户家目录下创建失败，则尝试在临时目录下创建 .debugTools 目录
             DEBUG_TOOLS_HOME_DIR = new File(System.getProperty("java.io.tmpdir") + File.separator + ".debugTools");
             try {
                 DEBUG_TOOLS_HOME_DIR.mkdirs();
@@ -51,9 +62,14 @@ public class DebugToolsLibUtils {
                 // ignore
             }
         }
+
         if (!DEBUG_TOOLS_HOME_DIR.exists()) {
+            // -D: 在程序运行时动态设置系统属性（System Properties）。这些属性会被加载到 JVM 的系统属性集合中，程序可以在运行时读取这些属性值
             System.err.println("Can not find directory to save debug tools lib. please try to set user home by -Duser.home=");
         }
+
+
+        // 创建DebugTools Lib目录, 用于存放
         DEBUG_TOOLS_LIB_DIR = new File(DEBUG_TOOLS_HOME_DIR, "lib");
         if (!DEBUG_TOOLS_LIB_DIR.exists()) {
             try {

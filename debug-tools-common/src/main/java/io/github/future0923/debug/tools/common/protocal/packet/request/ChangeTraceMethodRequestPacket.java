@@ -26,6 +26,8 @@ import lombok.EqualsAndHashCode;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * 开启/关闭 追踪方法调用链路 的请求包
+ *
  * @author future0923
  */
 @Data
@@ -34,12 +36,29 @@ public class ChangeTraceMethodRequestPacket extends Packet {
 
     private static final Logger logger = Logger.getLogger(ChangeTraceMethodRequestPacket.class);
 
+    /**
+     * 是否需要开启追踪
+     */
     private Boolean trace;
 
+    /**
+     * 所需要进行追踪的类
+     * <p>
+     * 只有在 trace 为 true 时有效
+     * </p>
+     */
     private String className;
 
+    /**
+     * 所需要进行追踪的方法
+     * <p>
+     * 只有在 trace 为 true 时有效
+     */
     private String methodName;
 
+    /**
+     * 所需要进行追踪的方法描述
+     */
     private String methodDescription;
 
     public ChangeTraceMethodRequestPacket() {
@@ -72,7 +91,9 @@ public class ChangeTraceMethodRequestPacket extends Packet {
             logger.warning("The data ChangeTraceMethodRequestPacket received is not JSON, {}", jsonString);
             return;
         }
+
         ChangeTraceMethodRequestPacket packet = DebugToolsJsonUtils.toBean(jsonString, ChangeTraceMethodRequestPacket.class);
+
         this.setTrace(packet.getTrace());
         this.setClassName(packet.getClassName());
         this.setMethodName(packet.getMethodName());

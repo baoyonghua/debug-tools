@@ -35,6 +35,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import java.io.OutputStream;
 
 /**
+ * 运行 Groovy 脚本
  * @author future0923
  */
 public class RunGroovyScriptRequestHandler extends BasePacketHandler<RunGroovyScriptRequestPacket> {

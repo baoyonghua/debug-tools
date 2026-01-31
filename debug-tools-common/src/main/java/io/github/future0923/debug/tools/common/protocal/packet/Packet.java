@@ -44,16 +44,42 @@ public abstract class Packet {
     public Packet() {
     }
 
+    /**
+     * 获取对应的命令类型
+     *
+     * @return
+     * @see io.github.future0923.debug.tools.common.protocal.Command
+     */
     public abstract Byte getCommand();
 
+    /**
+     * 二进制序列化
+     * <p>
+     * 将当前对象序列化为字节数组，用于网络传输。
+     *
+     * @return
+     */
     public abstract byte[] binarySerialize();
 
+    /**
+     * 二进制反序列化
+     * <p>
+     * 从字节数组中反序列化出对象数据，填充到当前Packet对象的字段中
+     *
+     * @param bytes 实际在网络中进行传输的二进制数据
+     */
     public abstract void binaryDeserialization(byte[] bytes);
 
     public boolean isSuccess() {
         return resultFlag == SUCCESS;
     }
 
+    /**
+     * 将当前对象序列化为字节数组，并写入到输出流中, 以便于将数据传输到服务端/客户端
+     *
+     * @param outputStream
+     * @throws IOException
+     */
     public void writeAndFlush(OutputStream outputStream) throws IOException {
         ByteBuf byteBuf = PacketCodec.INSTANCE.encode(this);
         outputStream.write(byteBuf.toByteArray());

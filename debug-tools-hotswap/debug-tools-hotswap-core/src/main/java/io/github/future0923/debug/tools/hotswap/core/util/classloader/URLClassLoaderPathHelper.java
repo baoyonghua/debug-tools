@@ -43,7 +43,7 @@ public class URLClassLoaderPathHelper {
     private static final Logger logger = Logger.getLogger(URLClassLoaderPathHelper.class);
 
     /**
-     * Javassist创建的UrlClassPath代理类
+     * Javassist创建的 UrlClassPath 代理类
      */
     private static Class<?> urlClassPathProxyClass = null;
 
@@ -51,15 +51,16 @@ public class URLClassLoaderPathHelper {
         Class<?> urlClassPathClass = null;
         ClassLoader classLoader = URLClassLoaderPathHelper.class.getClassLoader();
         try {
-            urlClassPathClass = classLoader.loadClass("sun.misc.URLClassPath");
+            urlClassPathClass = classLoader.loadClass("sun.misc.URLClassPath");  // JDK8及以下
         } catch (ClassNotFoundException e) {
             try {
-                // java9
+                // java9+
                 urlClassPathClass = classLoader.loadClass("jdk.internal.loader.URLClassPath");
             } catch (ClassNotFoundException e1) {
                 logger.error("Unable to loadClass URLClassPath!");
             }
         }
+
         if (urlClassPathClass != null) {
             ProxyFactory f = new ProxyFactory();
             f.setSuperclass(urlClassPathClass);
@@ -72,10 +73,11 @@ public class URLClassLoaderPathHelper {
      * 给指定的类加载器插入扩展的类加载路径。
      * 通过重新定义 UCP 字段。现有的类加载器都会被重新创建
      *
-     * @param classLoader    要添加的类加载器
+     * @param classLoader 要添加的类加载器
      */
     public static ClassLoader prependClassPath(final ClassLoader classLoader) {
-        return prependClassPath(classLoader, PluginManager.getInstance().getPluginConfiguration(classLoader).getExtraClasspath());
+        URL[] extraClasspath = PluginManager.getInstance().getPluginConfiguration(classLoader).getExtraClasspath();
+        return prependClassPath(classLoader, extraClasspath);
     }
 
     /**
@@ -88,7 +90,7 @@ public class URLClassLoaderPathHelper {
     public static ClassLoader prependClassPath(final ClassLoader classLoader, URL[] extraClassPath) {
         synchronized (classLoader) {
             try {
-                 Field ucpField = getUcpField(classLoader);
+                Field ucpField = getUcpField(classLoader);
                 if (ucpField == null) {
                     logger.debug("Unable to find ucp field in classLoader {}", classLoader);
                     return classLoader;
@@ -102,7 +104,7 @@ public class URLClassLoaderPathHelper {
                 // 创建方法拦截处理器
                 ExtraURLClassPathMethodHandler methodHandler = new ExtraURLClassPathMethodHandler(modifiedClassPath);
                 ((Proxy) urlClassPath).setHandler(methodHandler);
-                // 处理当前类和父类的ucp字段
+                // 处理当前类和父类的 ucp 字段
                 setUcpFieldOfAllClassLoader(classLoader, ucpField, urlClassPath);
                 logger.info("Added extraClassPath URLs {} to classLoader {}", Arrays.toString(extraClassPath), classLoader);
             } catch (Exception e) {
@@ -178,7 +180,10 @@ public class URLClassLoaderPathHelper {
     }
 
     /**
-     * 获取类加载器的ucp字段
+     * 获取类加载器的 ucp 字段
+     * <p>
+     *     ucp: 类和资源的可搜索路径
+     * </p>
      * <li>
      *     <ul>JDK 8: sun.misc.Launcher$AppClassLoaders</ul>
      *     <ul>JDK 9+: jdk.internal.loader.ClassLoaders$AppClassLoader</ul>
@@ -192,6 +197,7 @@ public class URLClassLoaderPathHelper {
         if (classLoader instanceof URLClassLoader) {
             return URLClassLoader.class.getDeclaredField("ucp");
         }
+
         Class<?> ucpOwner = classLoader.getClass();
         if (ucpOwner.getName().startsWith("jdk.internal.loader.ClassLoaders$")) {
             try {
@@ -204,8 +210,8 @@ public class URLClassLoaderPathHelper {
     }
 
     /**
-     *  jdk.internal.loader.ClassLoaders.AppClassLoader 的父类 'jdk.internal.loader.BuiltinClassLoader' 也有一个 ucp 字段。
-     *  这个字段是final和private，如果需要修改，它需要在所有super classes和当前类中进行修改。
+     * jdk.internal.loader.ClassLoaders.AppClassLoader 的父类 'jdk.internal.loader.BuiltinClassLoader' 也有一个 ucp 字段。
+     * 这个字段是final和private，如果需要修改，它需要在所有super classes和当前类中进行修改。
      */
     private static void setUcpFieldOfAllClassLoader(ClassLoader classLoader, Field ucpField, Object urlClassPath) throws IllegalAccessException {
         // 1. 设置当前类的 ucp 字段

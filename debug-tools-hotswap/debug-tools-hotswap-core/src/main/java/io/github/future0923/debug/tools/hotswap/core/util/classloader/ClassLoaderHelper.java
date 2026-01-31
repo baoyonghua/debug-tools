@@ -35,7 +35,7 @@ public class ClassLoaderHelper {
 
     static {
         try {
-            findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", new Class[] { String.class });
+            findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
             findLoadedClass.setAccessible(true);
         } catch (NoSuchMethodException e) {
             LOGGER.error("Unexpected: failed to get ClassLoader findLoadedClass method", e);

@@ -54,7 +54,7 @@ public class PluginConfiguration {
     private static final String PLUGIN_CONFIGURATION = "debug-tools-agent.properties";
 
     /**
-     * 要初始化的ClassLoader
+     * 要初始化的 ClassLoader
      */
     private static final String INCLUDED_CLASS_LOADERS_KEY = "includedClassLoaderPatterns";
 

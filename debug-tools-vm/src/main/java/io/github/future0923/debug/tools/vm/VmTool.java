@@ -42,6 +42,7 @@ class VmTool {
             return instance;
         }
 
+        // 加载 jni 本地库
         if (libPath == null) {
             System.loadLibrary(JNI_LIBRARY_NAME);
         } else {

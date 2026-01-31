@@ -44,6 +44,7 @@ public class JvmToolsUtils {
         }
 
         // 目前只针对mac特殊处理
+        // fix: 修复mac m1版本更换jdk后lib未重新创建导致项目无法启动 #191
         if (DebugToolsOSUtils.isMac() && DebugToolsJvmUtils.changeJdk(Boolean.FALSE)) {
             storeLib(getLibName());
             AgentConfig.INSTANCE.setCurrentOsArchAndStore(DebugToolsOSUtils.arch());
@@ -52,7 +53,12 @@ public class JvmToolsUtils {
 
         String jniPath = AgentConfig.INSTANCE.getJniLibraryPath();
         // 不是调试模式 && 没有升级版本 && jniPath不为空 && 文件存在 && 未加载
-        if (!ProjectConstants.DEBUG && !AgentConfig.INSTANCE.isUpgrade() && DebugToolsStringUtils.isNotBlank(jniPath) && DebugToolsFileUtils.exist(jniPath) && !load) {
+        if (!ProjectConstants.DEBUG
+                && !AgentConfig.INSTANCE.isUpgrade()
+                && DebugToolsStringUtils.isNotBlank(jniPath)
+                && DebugToolsFileUtils.exist(jniPath)
+                && !load
+        ) {
             initVmTool(jniPath);
             return;
         }
@@ -95,10 +101,16 @@ public class JvmToolsUtils {
         File jniLibraryFile;
         try {
             // 使用版本号新建lib文件，防止多版本插件冲突
-            jniLibraryFile = DebugToolsFileUtils.getTmpLibFile(jniLibraryUrl.openStream(), "DebugToolsJniLibrary-"+ProjectConstants.VERSION, DebugToolsFileUtils.extName(libName, true));
+            jniLibraryFile = DebugToolsFileUtils.getTmpLibFile(
+                    jniLibraryUrl.openStream(),
+                    "DebugToolsJniLibrary-" + ProjectConstants.VERSION,
+                    DebugToolsFileUtils.extName(libName, true)
+            );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        // 初始化 JVM工具
         initVmTool(jniLibraryFile.getAbsolutePath());
         AgentConfig.INSTANCE.setJniLibraryPathAndStore(jniLibraryFile.getAbsolutePath());
     }

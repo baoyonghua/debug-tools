@@ -18,8 +18,11 @@ package io.github.future0923.debug.tools.common.protocal.packet.response;
 
 import io.github.future0923.debug.tools.common.protocal.Command;
 import io.github.future0923.debug.tools.common.protocal.packet.Packet;
+import io.github.future0923.debug.tools.common.protocal.packet.request.HeartBeatRequestPacket;
 
 /**
+ * 收到心跳请求{@link HeartBeatRequestPacket}时返回给客户端的数据包
+ *
  * @author future0923
  */
 public class HeartBeatResponsePacket extends Packet {

@@ -36,14 +36,19 @@ public class DebugToolsSocketServer {
     public DebugToolsSocketServer() {
         clientAcceptThread = new ClientAcceptThread(countDownLatch);
         SocketServerHolder.setClientAcceptThread(clientAcceptThread);
+
         sessionCheckThread = new SessionCheckThread(clientAcceptThread.getLastUpdateTime2Thread());
         SocketServerHolder.setSessionCheckThread(sessionCheckThread);
     }
 
     public void start() {
+        // 用于接收客户端请求的线程
         clientAcceptThread.start();
+        // 用于检查客户端会话的线程
         sessionCheckThread.start();
+
         try {
+            // 阻塞等待接收线程启动完毕, 当 clientAcceptThread 启动完毕后会进行 countDown
             countDownLatch.await();
         } catch (InterruptedException ignored) {
         }

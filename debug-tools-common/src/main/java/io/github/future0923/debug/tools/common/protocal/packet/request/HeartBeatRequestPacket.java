@@ -20,6 +20,8 @@ import io.github.future0923.debug.tools.common.protocal.Command;
 import io.github.future0923.debug.tools.common.protocal.packet.Packet;
 
 /**
+ * 心跳请求包
+ *
  * @author future0923
  */
 public class HeartBeatRequestPacket extends Packet {

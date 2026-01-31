@@ -38,7 +38,7 @@ import java.net.URLClassLoader;
 import java.util.Objects;
 
 /**
- * DebugTools Agent
+ * debug-tools-agent
  *
  * @author future0923
  */
@@ -47,35 +47,52 @@ public class DebugToolsAttach {
     private static final Logger logger = Logger.getLogger(DebugToolsAttach.class);
 
     /**
-     * 启动入口
+     * Agent 启动入口
      *
-     * @param agentArgs 参数
+     * @param agentArgs 参数: server=true,tcp-port=12345,http-port=22222,...
      * @param inst      instrumentation
      * @throws Exception 启动失败
      */
     public static void premain(String agentArgs, Instrumentation inst) throws Exception {
+        // 解析参数
         AgentArgs parse = AgentArgs.parse(agentArgs);
         if (parse.getLogLevel() != null) {
             Logger.setLevel(parse.getLogLevel());
         }
+
         String javaHome = System.getProperty("java.home");
         logger.info("JAVA_HOME:{}", javaHome);
+
+        // 从 java.home 中加载 tools.jar，并将 tools.jar 的路径放入到 系统类加载器 中, 确保在运行时能够访问到 tools.jar 中的类
         loadToolsJar(javaHome);
+
         if (ProjectConstants.DEBUG) {
             // 开启javassist debug
             CtClass.debugDump = "debug/javassist";
             // 开启cglib debug
             System.setProperty("cglib.debugLocation", "debug/cglib");
         }
+
+        // 【核心】完成对 JVM工具 的初始化操作
         JvmToolsUtils.init();
+
+        // 对 jdbc 进行增强以便于拦截SQL进行打印
         SqlPrintByteCodeEnhance.enhance(inst, parse);
+
         if (Objects.equals(parse.getHotswap(), "true")) {
+            // fixed(hotswap):静态常量在运行时重新赋值时, 会被热加载被清空赋值(#185)
+            // 例如: 一个静态常量 map 在被修改时, 静态常量 map 的值会被清空
+            // 因此在这里通过配置的方式来让用户手动指定应该忽略哪些类的静态常量
             HotswapIgnoreStaticFieldUtils.create(parse.getIgnoreStaticFieldPath());
             HotswapAgent.init(parse, inst);
         }
+
+        // 【核心】启动 debug-tools-server
         if (Objects.equals(parse.getServer(), "true")) {
             startServer(parse, inst);
         }
+
+        // 自动 attach 本地应用
         if (Objects.equals(parse.getAutoAttach(), "true")) {
             autoAttach();
         }
@@ -106,25 +123,38 @@ public class DebugToolsAttach {
                 toolsJar = DebugToolsExecUtils.findToolsJar(javaHome);
             } catch (Exception ee) {
                 // 小于等于8找不到时给提示
-                logger.warning("The tools.jar file was not found, so remote dynamic compilation cannot be used. If you want to use remote dynamic compilation, please only use the jdk environment, not the jre. {}", ee.getMessage());
+                logger.warning("The tools.jar file was not found, so remote dynamic compilation cannot be used. " +
+                        "If you want to use remote dynamic compilation, " +
+                        "please only use the jdk environment, not the jre. {}", ee.getMessage());
                 return;
             }
+
             if (toolsJar != null) {
                 try {
+                    // 获取系统类加载器<AppClassLoader>， 它是 URLClassLoader 类型
                     URLClassLoader sysLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+
+                    // 通过反射获取 URLClassLoader 的 addURL 方法，并设置方法可访问(protected)
                     Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
                     addURL.setAccessible(true);
+
+                    // 调用 addURL 方法，将 tools.jar 添加到系统类加载器的 classpath 中
+                    // 这样就可以在运行时动态加载 tools.jar 中的类
                     addURL.invoke(sysLoader, toolsJar.toURI().toURL());
+
                     logger.info("Loaded tools.jar file in {}", sysLoader.getClass().getName());
                 } catch (Exception ex) {
-                    logger.warning("Failed to load the tools.jar file, so remote dynamic compilation cannot be used. If you want to use remote dynamic compilation, please only use the jdk environment, not the jre. {}", ex.getMessage());
+                    // 如果加载 toos.jar 失败，记录警告信息。这会导致远程动态编译功能不可用
+                    logger.warning("Failed to load the tools.jar file, so remote dynamic compilation cannot be used. " +
+                            "If you want to use remote dynamic compilation, " +
+                            "please only use the jdk environment, not the jre. {}", ex.getMessage());
                 }
             }
         }
     }
 
     /**
-     * 启动server服务
+     * 启动 server 服务
      *
      * @param agentArgs 参数
      * @param inst      instrumentation
