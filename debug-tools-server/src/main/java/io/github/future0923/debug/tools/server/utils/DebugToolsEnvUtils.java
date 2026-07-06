@@ -473,6 +473,7 @@ public class DebugToolsEnvUtils {
             }
             Method setRequest = springServletUtil.getMethod("setRequest", RunDTO.class);
             setRequest.invoke(null, runDTO);
+            setSaTokenServletContext();
         } catch (Exception ignored) {
             try {
                 DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, "jakarta.servlet.http.HttpServletRequest");
@@ -482,9 +483,82 @@ public class DebugToolsEnvUtils {
                 }
                 Method setRequest = springJakartaUtil.getMethod("setRequest", RunDTO.class);
                 setRequest.invoke(null, runDTO);
+                setSaTokenJakartaContext();
             } catch (Exception e) {
 
             }
+        }
+    }
+
+    public static void clearRequest() {
+        clearSaTokenContext();
+        clearSpringRequest();
+    }
+
+    private static void setSaTokenServletContext() {
+        setSaTokenContext(
+                "cn.dev33.satoken.servlet.util.SaTokenContextServletUtil",
+                "javax.servlet.http.HttpServletRequest",
+                "javax.servlet.http.HttpServletResponse",
+                getRequest(),
+                getResponse()
+        );
+    }
+
+    private static void setSaTokenJakartaContext() {
+        setSaTokenContext(
+                "cn.dev33.satoken.servlet.util.SaTokenContextJakartaServletUtil",
+                "jakarta.servlet.http.HttpServletRequest",
+                "jakarta.servlet.http.HttpServletResponse",
+                getJakartaRequest(),
+                getJakartaResponse()
+        );
+    }
+
+    private static void setSaTokenContext(String utilClassName, String requestClassName, String responseClassName, Object request, Object response) {
+        if (request == null || response == null) {
+            return;
+        }
+        try {
+            Class<?> requestClass = DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, requestClassName);
+            Class<?> responseClass = DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, responseClassName);
+            Class<?> utilClass = DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, utilClassName);
+            Method setContext = utilClass.getMethod("setContext", requestClass, responseClass);
+            setContext.invoke(null, request, response);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void clearSaTokenContext() {
+        clearSaTokenContext("cn.dev33.satoken.servlet.util.SaTokenContextServletUtil");
+        clearSaTokenContext("cn.dev33.satoken.servlet.util.SaTokenContextJakartaServletUtil");
+    }
+
+    private static void clearSaTokenContext(String utilClassName) {
+        try {
+            Class<?> utilClass = DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, utilClassName);
+            Method clearContext = utilClass.getMethod("clearContext");
+            clearContext.invoke(null);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void clearSpringRequest() {
+        try {
+            Class<?> springServletUtil = getSpringServletUtil();
+            if (springServletUtil != null) {
+                Method clearRequest = springServletUtil.getMethod("clearRequest");
+                clearRequest.invoke(null);
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            Class<?> springJakartaUtil = getSpringJakartaUtil();
+            if (springJakartaUtil != null) {
+                Method clearRequest = springJakartaUtil.getMethod("clearRequest");
+                clearRequest.invoke(null);
+            }
+        } catch (Exception ignored) {
         }
     }
 

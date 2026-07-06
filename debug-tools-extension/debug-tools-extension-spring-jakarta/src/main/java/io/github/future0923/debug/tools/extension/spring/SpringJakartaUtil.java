@@ -32,12 +32,17 @@ public class SpringJakartaUtil {
     public static void setRequest(RunDTO runDTO) {
         if (runDTO.getHeaders() != null && !runDTO.getHeaders().isEmpty()) {
             MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+            MockHttpServletResponse mockHttpServletResponse = new MockHttpServletResponse();
             runDTO.getHeaders().forEach(mockHttpServletRequest::addHeader);
-            ServletRequestAttributes requestAttributes = new ServletRequestAttributes(mockHttpServletRequest);
+            ServletRequestAttributes requestAttributes = new ServletRequestAttributes(mockHttpServletRequest, mockHttpServletResponse);
             RequestContextHolder.setRequestAttributes(requestAttributes);
         } else {
-            RequestContextHolder.resetRequestAttributes();
+            clearRequest();
         }
+    }
+
+    public static void clearRequest() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
     public static HttpServletRequest getRequest() {

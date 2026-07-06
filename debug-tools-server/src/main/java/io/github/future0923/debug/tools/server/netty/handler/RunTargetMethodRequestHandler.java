@@ -104,70 +104,74 @@ public class RunTargetMethodRequestHandler implements PacketHandler<RunTargetMet
             ClassLoaderResourceSyncUtils.syncToSystemClassLoader(classLoader);
             Thread.currentThread().setContextClassLoader(classLoader);
         }
-        Class<?> targetClass;
         try {
-            targetClass = DebugToolsClassUtils.loadClass(targetClassName, classLoader);
-        } catch (Exception e) {
-            String offsetPath = RunResultDTO.genOffsetPathRandom(e);
-            DebugToolsResultUtils.putCache(offsetPath, e);
-            writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, e, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
-            return;
-        }
-        Method targetMethod;
-        try {
-            targetMethod = targetClass.getDeclaredMethod(runDTO.getTargetMethodName(), DebugToolsClassUtils.getTypes(runDTO.getTargetMethodParameterTypes()));
-        } catch (NoSuchMethodException | SecurityException e) {
-            ArgsParseException exception = new ArgsParseException("未找到目标方法");
-            String offsetPath = RunResultDTO.genOffsetPathRandom(exception);
-            DebugToolsResultUtils.putCache(offsetPath, exception);
-            writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, exception, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
-            return;
-        }
-        DebugToolsEnvUtils.setRequest(runDTO);
-        if (DebugToolsStringUtils.isNotBlank(runDTO.getXxlJobParam())) {
-            DebugToolsEnvUtils.setXxlJobParam(runDTO.getXxlJobParam());
-        }
-        Object instance = null;
-        if (!targetMethod.isSynthetic()) {
+            Class<?> targetClass;
             try {
-                instance = BeanInstanceUtils.getInstance(targetClass, targetMethod);
+                targetClass = DebugToolsClassUtils.loadClass(targetClassName, classLoader);
             } catch (Exception e) {
-                ArgsParseException exception = new ArgsParseException("获取目标实例失败", e);
+                String offsetPath = RunResultDTO.genOffsetPathRandom(e);
+                DebugToolsResultUtils.putCache(offsetPath, e);
+                writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, e, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
+                return;
+            }
+            Method targetMethod;
+            try {
+                targetMethod = targetClass.getDeclaredMethod(runDTO.getTargetMethodName(), DebugToolsClassUtils.getTypes(runDTO.getTargetMethodParameterTypes()));
+            } catch (NoSuchMethodException | SecurityException e) {
+                ArgsParseException exception = new ArgsParseException("未找到目标方法");
                 String offsetPath = RunResultDTO.genOffsetPathRandom(exception);
                 DebugToolsResultUtils.putCache(offsetPath, exception);
                 writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, exception, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
                 return;
             }
-        }
-        Method bridgedMethod = DebugToolsEnvUtils.findBridgedMethod(targetMethod);
-        TraceMethodDTO traceMethodDTO = runDTO.getTraceMethodDTO();
-        boolean traceMethod = traceMethodDTO != null && traceMethodDTO.getTraceMethod();
-        if (traceMethod) {
-            TraceMethodClassFileTransformer.traceMethod(classLoader, targetClass, bridgedMethod, traceMethodDTO);
-        }
-        ReflectUtil.setAccessible(bridgedMethod);
-        Object[] targetMethodArgs = DebugToolsEnvUtils.getArgs(bridgedMethod, runDTO);
-
-        RunMethodAroundInvoker.Invocation aroundInvocation = aroundInvoker.prepare(runDTO, classLoader, targetMethodArgs);
-        Object result = null;
-        Throwable throwable = null;
-        try {
-            RunMethodContext.setRunMethod(targetClassName, runDTO.getTargetMethodName());
-            result = run(bridgedMethod, instance, targetMethodArgs, runDTO, ctx, traceMethod);
-            aroundInvocation.onAfter(result);
-        } catch (Exception e) {
-            logger.error("invoke target method error", e);
-            throwable = e.getCause();
-            if (throwable == null) {
-                throwable = e;
+            DebugToolsEnvUtils.setRequest(runDTO);
+            if (DebugToolsStringUtils.isNotBlank(runDTO.getXxlJobParam())) {
+                DebugToolsEnvUtils.setXxlJobParam(runDTO.getXxlJobParam());
             }
-            String offsetPath = RunResultDTO.genOffsetPathRandom(throwable);
-            DebugToolsResultUtils.putCache(offsetPath, throwable);
-            writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, throwable, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
-            aroundInvocation.onException(throwable);
+            Object instance = null;
+            if (!targetMethod.isSynthetic()) {
+                try {
+                    instance = BeanInstanceUtils.getInstance(targetClass, targetMethod);
+                } catch (Exception e) {
+                    ArgsParseException exception = new ArgsParseException("获取目标实例失败", e);
+                    String offsetPath = RunResultDTO.genOffsetPathRandom(exception);
+                    DebugToolsResultUtils.putCache(offsetPath, exception);
+                    writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, exception, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
+                    return;
+                }
+            }
+            Method bridgedMethod = DebugToolsEnvUtils.findBridgedMethod(targetMethod);
+            TraceMethodDTO traceMethodDTO = runDTO.getTraceMethodDTO();
+            boolean traceMethod = traceMethodDTO != null && traceMethodDTO.getTraceMethod();
+            if (traceMethod) {
+                TraceMethodClassFileTransformer.traceMethod(classLoader, targetClass, bridgedMethod, traceMethodDTO);
+            }
+            ReflectUtil.setAccessible(bridgedMethod);
+            Object[] targetMethodArgs = DebugToolsEnvUtils.getArgs(bridgedMethod, runDTO);
+
+            RunMethodAroundInvoker.Invocation aroundInvocation = aroundInvoker.prepare(runDTO, classLoader, targetMethodArgs);
+            Object result = null;
+            Throwable throwable = null;
+            try {
+                RunMethodContext.setRunMethod(targetClassName, runDTO.getTargetMethodName());
+                result = run(bridgedMethod, instance, targetMethodArgs, runDTO, ctx, traceMethod);
+                aroundInvocation.onAfter(result);
+            } catch (Exception e) {
+                logger.error("invoke target method error", e);
+                throwable = e.getCause();
+                if (throwable == null) {
+                    throwable = e;
+                }
+                String offsetPath = RunResultDTO.genOffsetPathRandom(throwable);
+                DebugToolsResultUtils.putCache(offsetPath, throwable);
+                writeResponse(ctx, RunTargetMethodResponsePacket.of(runDTO, throwable, offsetPath, DebugToolsBootstrap.serverConfig.getApplicationName()));
+                aroundInvocation.onException(throwable);
+            } finally {
+                aroundInvocation.onFinally(result, throwable);
+                RunMethodContext.clear();
+            }
         } finally {
-            aroundInvocation.onFinally(result, throwable);
-            RunMethodContext.clear();
+            DebugToolsEnvUtils.clearRequest();
             Thread.currentThread().setContextClassLoader(orgClassLoader);
         }
     }
