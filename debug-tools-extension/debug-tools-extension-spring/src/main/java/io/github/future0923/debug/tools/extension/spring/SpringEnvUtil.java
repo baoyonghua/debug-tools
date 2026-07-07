@@ -51,8 +51,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author future0923
@@ -368,6 +370,62 @@ public class SpringEnvUtil {
             }
         } else {
             return property;
+        }
+    }
+
+    public static Map<String, Object> getSpringReadyStatus() {
+        initSpringContext();
+        if (applicationContexts == null || applicationContexts.isEmpty()) {
+            return readyStatus(false, "STARTING", true);
+        }
+        for (ApplicationContext applicationContext : applicationContexts) {
+            if (!isContextActive(applicationContext)) {
+                continue;
+            }
+            if (isWebServerContext(applicationContext)) {
+                boolean webServerStarted = isWebServerStarted(applicationContext);
+                return readyStatus(webServerStarted, webServerStarted ? "UP" : "STARTING", !webServerStarted);
+            }
+            return readyStatus(true, "UP", false);
+        }
+        return readyStatus(false, "STARTING", true);
+    }
+
+    private static Map<String, Object> readyStatus(boolean ready, String state, boolean retryable) {
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("ready", ready);
+        status.put("state", state);
+        status.put("retryable", retryable);
+        return status;
+    }
+
+    private static boolean isContextActive(ApplicationContext applicationContext) {
+        return !(applicationContext instanceof ConfigurableApplicationContext) ||
+                ((ConfigurableApplicationContext) applicationContext).isActive();
+    }
+
+    private static boolean isWebServerContext(ApplicationContext applicationContext) {
+        try {
+            applicationContext.getClass().getMethod("getWebServer");
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    private static boolean isWebServerStarted(ApplicationContext applicationContext) {
+        try {
+            Object webServer = applicationContext.getClass().getMethod("getWebServer").invoke(applicationContext);
+            if (webServer == null) {
+                return false;
+            }
+            Object port = webServer.getClass().getMethod("getPort").invoke(webServer);
+            return port instanceof Integer && (Integer) port > 0;
+        } catch (Exception e) {
+            if (ProjectConstants.DEBUG) {
+                logger.warning("获取 Spring WebServer 状态失败", e);
+            }
+            return false;
         }
     }
 

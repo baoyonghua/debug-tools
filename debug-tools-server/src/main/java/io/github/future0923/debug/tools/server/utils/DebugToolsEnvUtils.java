@@ -217,6 +217,21 @@ public class DebugToolsEnvUtils {
         return getBeanDefinition.invoke(null, beanName);
     }
 
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getSpringReadyStatus() throws Exception {
+        Class<?> springEnvUtil = getSpringEnvUtilClass();
+        if (springEnvUtil == null) {
+            Map<String, Object> status = new HashMap<>();
+            status.put("ready", false);
+            status.put("state", "NO_SPRING_CONTEXT");
+            status.put("retryable", false);
+            return status;
+        }
+        DebugToolsClassUtils.loadDebugToolsClass(appClassLoader, "org.springframework.context.ApplicationContext");
+        Method getSpringReadyStatus = springEnvUtil.getMethod("getSpringReadyStatus");
+        return (Map<String, Object>) getSpringReadyStatus.invoke(null);
+    }
+
     /**
      * 根据类型获取Bean实例
      *

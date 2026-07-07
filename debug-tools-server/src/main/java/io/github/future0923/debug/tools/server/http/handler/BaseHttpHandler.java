@@ -55,7 +55,13 @@ public abstract class BaseHttpHandler<Req, Res> implements HttpHandler {
             req = DebugToolsJsonUtils.toBean(requestBody, reqClass, false);
         }
         Headers responseHeaders = httpExchange.getResponseHeaders();
-        Res res = doHandle(req, responseHeaders);
+        Object res = doHandle(req, responseHeaders);
+        int responseCode = 200;
+        if (res instanceof HttpResponse) {
+            HttpResponse<?> httpResponse = (HttpResponse<?>) res;
+            responseCode = httpResponse.getStatusCode();
+            res = httpResponse.getBody();
+        }
         String responseBody = "";
         if (res != null) {
             if (res instanceof String) {
@@ -68,7 +74,7 @@ public abstract class BaseHttpHandler<Req, Res> implements HttpHandler {
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         responseHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         byte[] bytes = responseBody.getBytes(StandardCharsets.UTF_8);
-        httpExchange.sendResponseHeaders(200, bytes.length);
+        httpExchange.sendResponseHeaders(responseCode, bytes.length);
         // 返回响应
         OutputStream outputStream = httpExchange.getResponseBody();
         outputStream.write(bytes);
